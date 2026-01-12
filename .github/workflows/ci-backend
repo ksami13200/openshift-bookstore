@@ -31,7 +31,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-                  -Dsonar.projectKey=ksami13200_openshift-bookstore2
+                  -Dsonar.projectKey=ksami13200_openshift-bookstore
                   -Dsonar.organization=ksami13200
                   -Dsonar.sources=.
       - name: Fetch Sonar Metrics
