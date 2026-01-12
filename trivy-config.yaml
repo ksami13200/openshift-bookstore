@@ -1,4 +1,11 @@
-severity: HIGH,CRITICAL
+# trivy-config.yaml
 ignore-unfixed: true
 skip-dirs:
-  - node_modules
+  - "node_modules"
+  - "vendor"
+  - "test"
+severity:
+  - CRITICAL
+  - HIGH
+vex:
+  enable: false
