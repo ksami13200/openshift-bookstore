@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  labels:
-    app: redis
 spec:
   replicas: 1
   selector:
@@ -15,13 +13,19 @@ spec:
         app: redis
     spec:
       containers:
-      - name: redis
-        image: redis:7.0
-        ports:
+        - name: redis
+          image: redis:7.0
+          ports:
           - containerPort: 6379
-        volumeMounts:
-          - name: redis-data
-            mountPath: /data
-      volumes:
-      - name: redis-data
-     
+          args:
+            - "--requirepass"
+            - "$(REDIS_PASSWORD)"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+              secretKeyRef:
+                  name: bookstore-db-secret
+                  key: REDIS_PASSWORD
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data  
