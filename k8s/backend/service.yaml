@@ -4,7 +4,7 @@ metadata:
   name: bookstore-be-svc
 spec:
   selector:
-    app.kubernetes.io/name: bookstore
+    app: bookstore-be
   ports:
     - protocol: TCP
       port: 3000
