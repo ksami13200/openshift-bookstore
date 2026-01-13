@@ -1,33 +1,43 @@
-# ---- Builder Stage ----
-FROM node:20-alpine AS builder
+# =========================
+# 1️⃣ Builder stage
+# =========================
+FROM node:18-bookworm-slim AS builder
 
+# Create app directory
 WORKDIR /app
 
-# Copy ONLY dependency manifests (enables caching)
-COPY package.json package-lock.json ./app/
+# Copy dependency manifests
+COPY package.json package-lock.json ./
 
-# Install production dependencies only
-RUN npm ci --omit=dev --no-fund --no-audit --loglevel=error && \
+# Install only production dependencies
+RUN npm ci --omit=dev --ignore-scripts && \
+    # Remove unnecessary files to reduce layer size
     npm cache clean --force
 
-# ---- Runtime Stage ----
-FROM node:20-alpine AS runtime
+# Copy application code
+COPY server.js ./
 
-# Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S appuser -u 1001 -G appgroup
+# Ensure files are readable by non-root user (UID 65532 in distroless)
+RUN chown -R 65532:65532 /app
 
+
+# =========================
+# 2️⃣ Runtime stage (Distroless)
+# =========================
+FROM gcr.io/distroless/nodejs18-debian12
+
+# Set working directory
 WORKDIR /app
 
-# Copy production node_modules from builder
-COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
+# Copy built app from builder (already owned by UID 65532)
+COPY --from=builder --chown=65532:65532 /app /app
 
-# Copy ONLY your application entry point (e.g., server.js)
-COPY --chown=appuser:appgroup server.js ./
+# Environment
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Drop privileges
-USER appuser
-
+# Expose port (documentation only)
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+# Run the app
+CMD ["server.js"]

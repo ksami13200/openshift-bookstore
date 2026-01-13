@@ -14,11 +14,11 @@ spec:
         app: bookstore-db
     spec:
       containers:
-        - name: mysql
+      - name: mysql
           image: mysql:8.0
           ports:
             - containerPort: 3306
-          env:
+        env:
             - name: MYSQL_DATABASE
               valueFrom:
                 configMapKeyRef:
@@ -39,7 +39,7 @@ spec:
                 secretKeyRef:
                   name: bookstore-db-secret
                   key: MYSQL_PASSWORD
-          volumeMounts:
+        volumeMounts:
             - name: db-data
               mountPath: /var/lib/mysql
   volumeClaimTemplates:
