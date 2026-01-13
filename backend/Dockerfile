@@ -41,3 +41,4 @@ EXPOSE 3000
 
 # Run the app
 CMD ["server.js"]
+
