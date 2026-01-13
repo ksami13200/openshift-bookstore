@@ -10,6 +10,10 @@ COPY html/* .
 
 # Copy nginx configuration
 COPY nginx.conf /nginx.conf
+# Validate nginx configuration
+RUN apk add --no-cache nginx && \
+    nginx -t -c /nginx.conf && \
+    apk del nginx
 
 
 # =========================
