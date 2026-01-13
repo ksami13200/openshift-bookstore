@@ -26,4 +26,11 @@ EXPOSE 8080
 
 # The nginx:alpine image already creates an 'nginx' user
 USER nginx
+# In the runtime stage (after copying files)
+RUN mkdir -p /var/cache/nginx && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chmod -R 755 /var/cache/nginx
+
+# Also ensure logs dir is writable if needed
+RUN mkdir -p /var/log/nginx && chown -R nginx:nginx /var/log/nginx
 CMD ["nginx", "-g", "daemon off;"]
