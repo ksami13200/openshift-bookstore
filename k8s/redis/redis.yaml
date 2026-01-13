@@ -13,19 +13,23 @@ spec:
         app: redis
     spec:
       containers:
-        - name: redis
-          image: redis:7.0
-          ports:
-          - containerPort: 6379
-          args:
-            - "--requirepass"
-            - "$(REDIS_PASSWORD)"
-          env:
-            - name: REDIS_PASSWORD
-              valueFrom:
-              secretKeyRef:
-                  name: bookstore-db-secret
-                  key: REDIS_PASSWORD
-          volumeMounts:
-            - name: redis-data
-              mountPath: /data  
+      - name: redis
+        image: redis:7.0
+        ports:
+        - containerPort: 6379
+        args:
+        - "--requirepass"
+        - "$(REDIS_PASSWORD)"
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bookstore-db-secret
+              key: REDIS_PASSWORD
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-pvc

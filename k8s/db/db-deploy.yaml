@@ -15,39 +15,39 @@ spec:
     spec:
       containers:
       - name: mysql
-          image: mysql:8.0
-          ports:
-            - containerPort: 3306
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
         env:
-            - name: MYSQL_DATABASE
-              valueFrom:
-                configMapKeyRef:
-                  name: bookstore-db-config
-                  key: MYSQL_DATABASE
-            - name: MYSQL_USER
-              valueFrom:
-                configMapKeyRef:
-                  name: bookstore-db-config
-                  key: MYSQL_USER
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: bookstore-db-secret
-                  key: MYSQL_ROOT_PASSWORD
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: bookstore-db-secret
-                  key: MYSQL_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: bookstore-db-config
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: bookstore-db-config
+              key: MYSQL_USER
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bookstore-db-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bookstore-db-secret
+              key: MYSQL_PASSWORD
         volumeMounts:
-            - name: db-data
-              mountPath: /var/lib/mysql
+        - name: db-data
+          mountPath: /var/lib/mysql
   volumeClaimTemplates:
-    - metadata:
-        name: db-data
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: bookstore-sc
-        resources:
-          requests:
-            storage: 10Gi
+  - metadata:
+      name: db-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: bookstore-sc
+      resources:
+        requests:
+          storage: 10Gi
