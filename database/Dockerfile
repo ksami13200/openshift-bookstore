@@ -1,5 +1,5 @@
 # Database Dockerfile - MySQL with initialization
-FROM mysql:8.0
+FROM docker.io/library/mysql:8.0
 
 # Metadata
 LABEL maintainer="student@example.com" \
