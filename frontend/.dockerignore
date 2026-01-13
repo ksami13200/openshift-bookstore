@@ -1,0 +1,23 @@
+# Ignore everything by default
+**
+
+# Allow only what's needed
+!html/
+!html/**
+!nginx.conf
+
+# Optional: if you have other allowed static assets (e.g., images, CSS, JS in subdirs)
+# !public/
+# !assets/
+
+# Explicitly exclude common noise (redundant but safe)
+.git/
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+.env
+*.log
+node_modules/
+dist/
+build/
