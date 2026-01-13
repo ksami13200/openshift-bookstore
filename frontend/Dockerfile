@@ -31,3 +31,4 @@ EXPOSE 8080
 
 # The nginx:alpine image already creates an 'nginx' user
 USER nginx
+CMD ["nginx", "-g", "daemon off;"]
