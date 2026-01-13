@@ -1,0 +1,50 @@
+# Ignore everything by default (optional but safe)
+**
+
+# Explicitly allow only what you need
+!init.sql
+
+# OR — if you prefer a permissive approach (less secure but common):
+# Ignore version control
+.git
+.gitignore
+
+# Ignore IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Ignore logs and temp files
+*.log
+tmp/
+temp/
+
+# Ignore documentation and non-essential files
+README.md
+LICENSE
+CHANGELOG.md
+docs/
+notes.txt
+
+# Ignore environment files (CRITICAL: avoid leaking secrets)
+.env
+.env.local
+.env.development
+.env.production
+
+# Ignore package manager files (if present)
+node_modules/
+package-lock.json
+yarn.lock
+composer.lock
+requirements.txt
+Pipfile
+
+# Ignore Docker-related files not needed in build context
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yarn
