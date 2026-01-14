@@ -1,116 +1,149 @@
-name: ci-pipeline
+name: Backend Secure CI Pipeline
 
 on:
   push:
-    branches: [ master ]
-    paths:
-      - 'backend/**'
-  
+    branches: [ main ]
+  paths:
+    - 'backend/**'
+    - '.github/workflows/ci-backend.yml'
 
+env:
+  NODE_VERSION: "18"
+  IMAGE_NAME: backend
+  REPORTS_DIR: reports
+  TRIVY_CONFIG_FILE: trivy-config.yaml
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+# ===============================
+# Job 1: Source → Test → Sonar
+# ===============================
 jobs:
-# ---------- Code Quality ----------
-  codelevel:
+  test-and-sonar:
+    name: Test & SonarCloud Scan
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-  
-  #2 Install Podman & Trivy
-      - name: Install Podman
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y podman
 
-      - name: Install Trivy
-        uses: aquasecurity/trivy-action@master
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          version: latest
-# 3 sonarcloud scan
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Enable later if tests exist
+      # - name: Run tests
+      #   run: npm test
+
+      - name: Create Sonar reports directory
+        run: mkdir -p ${{ env.REPORTS_DIR }}/sonar
+
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-                  -Dsonar.projectKey=ksami13200_openshift-bookstore
-                  -Dsonar.organization=ksami13200
-                  -Dsonar.sources=.
-      - name: Fetch Sonar Metrics
-        run: |
-          mkdir -p reports/sonar
-          curl -s -u ${{ secrets.SONAR_TOKEN }}: \
-          "https://sonarcloud.io/api/measures/component?component=Abdelrazek97_cap-stone-project&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
-          -o reports/sonar/metrics.json
-      - name: Generate Sonar Report
-        run: |
-          echo "# Sonar Metrics" > reports/sonar/report.md
-          echo "| Metric | Value |" >> reports/sonar/report.md
-          echo "|------|-------|" >> reports/sonar/report.md
-          jq -r '.component.measures[] | "| \(.metric) | \(.value) |"' reports/sonar/metrics.json >> reports/sonar/report.md
-     
-      - uses: actions/upload-artifact@v4
+            -Dsonar.organization=your-sonar-org
+            -Dsonar.projectKey=${{ github.repository }}-backend
+            -Dsonar.projectName=Backend
+            -Dsonar.sources=.
+            -Dsonar.javascript.lcov.reportPaths=${{ env.REPORTS_DIR }}/sonar
+            -Dsonar.qualitygate.wait=true
+      
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
         with:
-          name: sonar-report
-          path: reports/sonar/
+          name: security-reports
+          path: |
+            ${{ env.REPORTS_DIR }}/sonar
 
-      - name: Check SonarCloud Quality Gate
+# ===============================
+# Job 2: Build → Trivy → SBOM → Sign → Push
+# ===============================
+  build-scan-sign-push:
+    name: Build, Scan, Sign & Push Image
+    runs-on: ubuntu-latest
+    needs: test-and-sonar
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set image tag
         run: |
-          if grep -q "QUALITY GATE STATUS: FAILED" sonar-report.txt; then
-            echo "❌ SonarCloud quality gate failed!"
-            exit 1
-          else
-            echo "✅ SonarCloud quality gate passed."
-          fi
+          echo "IMAGE=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
 
-      # 4. Build Image with Podman
-      - name: Build Container Image
-        run: |
-          cd backend
-          podman build -t ${{ secrets.DOCKERHUB_USERNAME }}-be:${{ github.sha }} .
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-      # 6. Trivy Scans (Vulnerability + SBOM)
-      - name: Run Trivy Vulnerability Scan
+      - name: Build Docker image
+        run: docker build -t $IMAGE .
+
+      - name: Create Trivy reports directory
+        run: mkdir -p ${{ env.REPORTS_DIR }}/trivy
+
+      - name: Trivy Image Scan (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}
+          scan-type: image
+          scanners: vuln
+          exit-code: 1
+          format: table
+          output: ${{ env.REPORTS_DIR }}/trivy/trivy-report.txt
+          config-file: ${{ env.TRIVY_CONFIG_FILE }}
+
+      - name: Generate Trivy SBOM (CycloneDX)
         run: |
           trivy image \
-            --config trivy-config.yaml \
-            --format table \
-            --output trivy-vuln-report.txt \
-            ${{ secrets.DOCKERHUB_USERNAME }}-be:${{ github.sha }}
+            --config ${{ env.TRIVY_CONFIG_FILE }} \
+            --format cyclonedx \
+            --output ${{ env.REPORTS_DIR }}/trivy/sbom.cdx \
+            $IMAGE
 
-      - name: Run Trivy SBOM Scan
-        run: |
-          trivy sbom \
-            --config trivy-config.yaml \
-            --format cyclonedx-json \
-            --output trivy-sbom-report.json \
-            ${{ secrets.DOCKERHUB_USERNAME }}-be:${{ github.sha }}
+      - name: Push image to Docker Hub
+        run: docker push $IMAGE
 
-      - name: Fail on Critical/High Vulnerabilities
-        run: |
-          trivy image \
-            --config trivy-config.yaml \
-            --severity CRITICAL,HIGH \
-            --exit-code 1 \
-            --no-progress \
-            ${{ secrets.DOCKERHUB_USERNAME }}-be:${{ github.sha }}
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
 
-      # 7. Push Image to Docker Hub
-      - name: Log in to Docker Hub
+      - name: Sign image with Cosign
         run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | podman login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin docker.io
+          echo "${{ secrets.COSIGN_KEY }}" | base64 -d > cosign.key
+          cosign sign --key cosign.key $IMAGE
 
-      - name: Push Image
-        run: |
-          podman push ${{ secrets.DOCKERHUB_USERNAME }}-be:${{ github.sha }} docker.io/${{ secrets.DOCKERHUB_USERNAME }}-be:${{ github.sha }}
-      # 8. Update Kubernetes Manifests
-      - name: Update K8s Deployment Image Tag
-        run: |
-          # Adjust path to your manifest(s)
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}-be:[^[:space:]]*|image: ${{ secrets.DOCKERHUB_USERNAME }}-be:${{ github.sha }}|" k8s/deployment.yaml
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            ${{ env.REPORTS_DIR }}/trivy
 
-      - name: Commit Updated Manifest
+# ===============================
+# Job 3: Update Kubernetes Manifests
+# ===============================
+  deploy:
+    name: Update Kubernetes Manifests
+    runs-on: ubuntu-latest
+    needs: build-scan-sign-push
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update image in Kubernetes manifests
         run: |
-          git config --global user.name 'CI Bot'
-          git config --global user.email 'ci-bot@example.com'
-          git add k8s/deployment.yaml
-          git diff --quiet && echo "No changes" || git commit -m "chore: update image to ${{ github.sha }}"
-          git push origin master
+          sed -i "s|image:.*|image: $IMAGE|" k8s/backend/deployment.yaml
+
+   
