@@ -56,15 +56,22 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=scans-reports/sonar
 # -Dsonar.qualitygate.wait=true
       
-      - name: Create Sonar reports directory
-        run: mkdir -p ${{ env.REPORTS_DIR }}/sonar
-
-      - name: Upload security reports
-        uses: actions/upload-artifact@v4
+      - name: Fetch Sonar Metrics
+        run: |
+          mkdir -p scans-reports/sonar
+          curl -s -u ${{ secrets.SONAR_TOKEN }}: \
+          "https://sonarcloud.io/api/measures/component?component=Abdelrazek97_cap-stone-project&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
+          -o scans-reports/sonar/metrics.json
+      - name: Generate Sonar Report
+        run: |
+          echo "# Sonar Metrics" > scans-reports/sonar/report.md
+          echo "| Metric | Value |" >> scans-reports/sonar/report.md
+          echo "|------|-------|" >> scans-reports/sonar/report.md
+          jq -r '.component.measures[] | "| \(.metric) | \(.value) |"' scans-reports/sonar/metrics.json >> scans-reports/sonar/report.md
+      - uses: actions/upload-artifact@v4
         with:
-          name: security-reports
-          path: |
-                ./${{ env.REPORTS_DIR }}/sonar
+          name: sonar-report
+          path: scans-reports/sonar/report.md
 # ===============================
 # Job 2: Build → Trivy → SBOM → Sign → Push
 # ===============================
@@ -93,19 +100,16 @@ jobs:
       - name: Build Docker image
         run: docker build -t $IMAGE ./backend
 
-      - name: Create Trivy reports directory
-        run: mkdir -p ${{ env.REPORTS_DIR }}/trivy
-
-      - name: Trivy Image Scan (fail on HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@master
+      - name: Trivy Scan (Image)
+        uses: aquasecurity/trivy-action@0.33.1
         with:
-          image-ref: ${{ env.IMAGE }}
-          scan-type: image
-          scanners: vuln
-          exit-code: 1
-          format: table
-          output: ${{ env.REPORTS_DIR }}/trivy/trivy-report.txt
-          trivy-config: ${{ env.TRIVY_CONFIG_FILE }}
+            image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+            format: table
+            output: trivy-${{ env.IMAGE_NAME }}.txt
+            scan-type: image
+            exit-code: '1'
+            vuln-type: 'os,library'
+            trivy-config: ${{ env.TRIVY_CONFIG_FILE }}
 
       - name: Generate Trivy SBOM (CycloneDX)
         run: |
