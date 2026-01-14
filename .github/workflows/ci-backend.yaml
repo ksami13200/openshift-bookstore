@@ -104,7 +104,7 @@ jobs:
           exit-code: 1
           format: table
           output: ${{ env.REPORTS_DIR }}/trivy/trivy-report.txt
-          config-file: ${{ env.TRIVY_CONFIG_FILE }}
+          trivy-config: ${{ env.TRIVY_CONFIG_FILE }}
 
       - name: Generate Trivy SBOM (CycloneDX)
         run: |
