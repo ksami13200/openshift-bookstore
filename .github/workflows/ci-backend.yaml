@@ -4,8 +4,8 @@ on:
   push:
     branches: [ master ]
   paths:
-    - 'backend/**'
-    - '.github/workflows/ci-backend.yml'
+    - backend/**
+    - .github/workflows/ci-backend.yml
 
 env:
   NODE_VERSION: "18"
