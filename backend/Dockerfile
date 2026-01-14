@@ -25,7 +25,8 @@ RUN npm cache clean --force
 ############################
 # 2️⃣ Runtime stage (Distroless)
 ############################
-FROM gcr.io/distroless/nodejs18-debian12@sha256:5f4f4c87ab818b363ebe62f9dd9d4c2f64195fb2f35da673f1acd7142aa0627f
+FROM gcr.io/distroless/nodejs18-debian12@sha256:053541fd75d55477ecfa8a7cc54f433dc25b109c2560010f6e146ea053356a99
+
 # Set working directory
 WORKDIR /app
 # Copy node_modules and app from builder
