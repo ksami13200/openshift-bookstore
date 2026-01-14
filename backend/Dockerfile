@@ -25,10 +25,12 @@ RUN npm cache clean --force
 ############################
 # 2️⃣ Runtime stage (Distroless)
 ############################
-FROM gcr.io/distroless/nodejs18-debian12:deprecated-public-image-72dd275a5a681f67291f881f22cd198e862f779901f2e1626bf3b26dbd2b4bd0
-
+FROM gcr.io/distroless/nodejs18-debian12
 # Set working directory
 WORKDIR /app
+# ... other Dockerfile instructions ...
+RUN apt-get update && apt-get upgrade -y libc6 && apt-get clean && rm -rf /var/lib/apt/lists/*
+# ... rest of your Dockerfile ...
 
 # Copy node_modules and app from builder
 COPY --from=builder /app /app
