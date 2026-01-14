@@ -3,9 +3,9 @@ name: Backend Secure CI Pipeline
 on:
   push:
     branches: [ master ]
-  paths:
+    paths:
     - backend/**
-    - .github/workflows/ci-backend.yml
+    - .github/workflows/ci-backend.yaml
 
 env:
   NODE_VERSION: "18"
