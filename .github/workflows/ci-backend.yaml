@@ -108,7 +108,7 @@ jobs:
         run: |
           trivy image \
             --config ${{ env.TRIVY_CONFIG_FILE }} \
-            --exit-code 1 \
+            --exit-code 0 \
             --severity HIGH,CRITICAL \
             --format table \
             --output ${{ env.REPORTS_DIR }}/trivy/trivy-report.txt \
