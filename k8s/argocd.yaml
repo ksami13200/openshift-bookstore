@@ -1,29 +1,32 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: bookstore-apps
+  name: bookstore
   namespace: argocd
 spec:
   generators:
   - list:
       elements:
-      - app: frontend
+      - name: backend
+        path: k8s/backend
+        namespace: backend-ns
+      - name: frontend
         path: k8s/frontend
         namespace: frontend-ns
-      - app: backend
-        path: k8s/backend
-        namespace: backend-ns 
-      - app: data
-
+      - name: db
         path: k8s/db
         namespace: data-ns
+      - name: redis
+        path: k8s/redis
+        namespace: data-ns
+
   template:
     metadata:
-      name: '{{app}}-{{env}}'
+      name: '{{name}}'
     spec:
       project: default
       source:
-        repoURL: https://github.com/your-org/bookstore.git
+        repoURL: https://github.com/ksami13200/openshift-bookstore
         targetRevision: main
         path: '{{path}}'
       destination:
