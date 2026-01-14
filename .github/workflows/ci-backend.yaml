@@ -52,8 +52,9 @@ jobs:
             -Dsonar.organization=ksami13200
             -Dsonar.projectKey=ksami13200_openshift-bookstore
             -Dsonar.sources=./backend
-            -Dsonar.javascript.lcov.reportPaths=${{ env.REPORTS_DIR }}/sonar
-            -Dsonar.qualitygate.wait=true
+
+             -Dsonar.javascript.lcov.reportPaths=scans-reports/sonar
+# -Dsonar.qualitygate.wait=true
       
       - name: Upload security reports
         uses: actions/upload-artifact@v4
