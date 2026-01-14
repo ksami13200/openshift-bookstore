@@ -30,7 +30,7 @@ FROM gcr.io/distroless/nodejs18-debian12
 WORKDIR /app
 
 # Copy built app from builder (already owned by UID 65532)
-COPY --from=builder --chown=65532:65532 /app /app
+COPY --from=builder /app /app
 
 # Environment
 ENV NODE_ENV=production
