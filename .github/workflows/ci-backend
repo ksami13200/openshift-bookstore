@@ -10,7 +10,7 @@ on:
 env:
   NODE_VERSION: "18"
   IMAGE_NAME: backend
-  REPORTS_DIR: reports
+  REPORTS_DIR: scans-reports
   TRIVY_CONFIG_FILE: trivy-config.yaml
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
