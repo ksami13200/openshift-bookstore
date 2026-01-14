@@ -9,10 +9,10 @@ on:
 
 env:
   NODE_VERSION: "18"
-  IMAGE_NAME: backend
+  IMAGE_NAME: bookstore-be
   REPORTS_DIR: scans-reports
   TRIVY_CONFIG_FILE: trivy-config.yaml
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
 
 # ===============================
 # Job 1: Source → Test → Sonar
