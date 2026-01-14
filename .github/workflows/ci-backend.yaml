@@ -95,23 +95,22 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build Docker image
-        run: docker build -t $IMAGE ./backend
-      
       - name: Set image tag
         run: |
-             echo "IMAGE=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}" >> $GITHUB_ENV
-      - name: Trivy Scan (Image)
+          echo "IMAGE=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: docker build -t $IMAGE ./backend
+
+# ✅ NOW scan the locally built image
+      - name: Trivy Image Scan
         uses: aquasecurity/trivy-action@0.33.1
         with:
-            image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
-            format: table
-            output: trivy-${{ env.IMAGE_NAME }}.txt
-            scan-type: image
-            exit-code: '1'
-            vuln-type: 'os,library'
-            trivy-config: ${{ env.TRIVY_CONFIG_FILE }}
-
+          image-ref: ${{ env.IMAGE }}
+          trivy-config: ${{ env.TRIVY_CONFIG_FILE }}
+          exit-code: 1
+          format: table
+          output: ${{ env.REPORTS_DIR }}/trivy/trivy-report.txt
       - name: Generate Trivy SBOM (CycloneDX)
         run: |
           trivy image \
