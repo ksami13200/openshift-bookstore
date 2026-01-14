@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: backend-ns
   labels:
-    name: backend-ns
+    kubernetes.io/metadata.name: backend-ns

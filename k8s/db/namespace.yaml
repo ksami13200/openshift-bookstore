@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: data-ns
   labels:
-    name: data-ns
+    kubernetes.io/metadata.name: data-ns

@@ -7,13 +7,16 @@ spec:
   podSelector:
     matchLabels:
       app: redis
+  policyTypes:
+  - Ingress
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: backend-ns
+          kubernetes.io/metadata.name: backend-ns
       podSelector:
         matchLabels:
           app: bookstore-be
     ports:
-    - port: 6379
+    - protocol: TCP
+      port: 6379

@@ -7,13 +7,16 @@ spec:
   podSelector:
     matchLabels:
       app: bookstore-db
+  policyTypes:
+  - Ingress
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: backend-ns
+          kubernetes.io/metadata.name: backend-ns
       podSelector:
         matchLabels:
           app: bookstore-be
     ports:
-    - port: 3306
+    - protocol: TCP
+      port: 3306
