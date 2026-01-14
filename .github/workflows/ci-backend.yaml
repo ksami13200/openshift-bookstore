@@ -134,10 +134,13 @@ jobs:
         uses: sigstore/cosign-installer@v3
 
       - name: Sign image with Cosign
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          IMAGE: ${{ secrets.DOCKER_USERNAME }}/bookstore-be:${{ github.sha }}
         run: |
-          echo "${{ secrets.COSIGN_KEY }}" | base64 -d > cosign.key
-          cosign sign --key cosign.key $IMAGE
-
+            echo "$COSIGN_KEY" | base64 -d > cosign.key
+            cosign sign --key cosign.key --yes $IMAGE
+            rm -f cosign.key
       
   deploy:
     name: Update Kubernetes Manifests
