@@ -18,7 +18,7 @@ COPY server.js ./
 # 2️⃣ Runtime stage (Distroless)
 # =========================
 # Using a specific versioned tag instead of 'latest'
-FROM gcr.io/distroless/nodejs18-debian12:v20250101
+FROM gcr.io/distroless/nodejs18-debian12:20
 
 WORKDIR /app
 
