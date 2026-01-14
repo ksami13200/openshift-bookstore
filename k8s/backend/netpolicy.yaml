@@ -8,9 +8,9 @@ spec:
       app: bookstore-be
   ingress:
   - from:
-    - podSelector:
-        matchLabels:
-          app: bookstore-fe
-    ports:
-    - protocol: TCP
-      port: 3000
+- namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: frontend-ns
+  podSelector:
+    matchLabels:
+      app: bookstore-fe
