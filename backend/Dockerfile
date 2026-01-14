@@ -3,21 +3,19 @@
 # =========================
 FROM node:18-bookworm-slim AS builder
 
-# Create app directory
 WORKDIR /app
 
 # Copy dependency manifests
 COPY package.json package-lock.json ./
 
-# Install only production dependencies
+# Install production deps only
 RUN npm ci --omit=dev --ignore-scripts && \
-    # Remove unnecessary files to reduce layer size
     npm cache clean --force
 
-# Copy application code
+# Copy app code
 COPY server.js ./
 
-# Ensure files are readable by non-root user (UID 65532 in distroless)
+# Set ownership for distroless (UID 65532 = non-root)
 RUN chown -R 65532:65532 /app
 
 
@@ -26,19 +24,17 @@ RUN chown -R 65532:65532 /app
 # =========================
 FROM gcr.io/distroless/nodejs18-debian12
 
-# Set working directory
 WORKDIR /app
 
-# Copy built app from builder (already owned by UID 65532)
+# Copy built app
 COPY --from=builder /app /app
 
 # Environment
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Expose port (documentation only)
+# Expose port (for documentation only)
 EXPOSE 3000
 
-# Run the app
-CMD ["server.js"]
-
+# Run app with Node.js
+CMD ["node", "server.js"]
