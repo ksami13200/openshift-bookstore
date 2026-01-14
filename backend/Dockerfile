@@ -22,7 +22,8 @@ RUN chown -R 65532:65532 /app
 # =========================
 # 2️⃣ Runtime stage (Distroless)
 # =========================
-FROM gcr.io/distroless/nodejs18-debian12
+FROM gcr.io/distroless/nodejs18-debian12@sha256:<digest>
+
 
 WORKDIR /app
 
