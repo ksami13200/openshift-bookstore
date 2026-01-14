@@ -27,7 +27,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/ksami13200/openshift-bookstore
-        targetRevision: main
+        targetRevision: master
         path: '{{path}}'
       destination:
         server: https://kubernetes.default.svc
