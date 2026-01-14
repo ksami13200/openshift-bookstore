@@ -48,9 +48,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.organization=your-sonar-org
-            -Dsonar.projectKey=${{ github.repository }}-backend
-            -Dsonar.projectName=Backend
+            -Dsonar.organization=ksami13200
+            -Dsonar.projectKey=ksami13200_openshift-bookstore
             -Dsonar.sources=.
             -Dsonar.javascript.lcov.reportPaths=${{ env.REPORTS_DIR }}/sonar
             -Dsonar.qualitygate.wait=true
