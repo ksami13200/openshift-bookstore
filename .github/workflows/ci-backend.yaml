@@ -4,25 +4,19 @@ on:
   push:
     branches: [ master ]
     paths:
-    - backend/**
-    - .github/workflows/ci-backend.yaml
+      - backend/**
+      - .github/workflows/ci-backend.yaml
 
 env:
   NODE_VERSION: "18"
   IMAGE_NAME: bookstore-be
   REPORTS_DIR: scans-reports
   TRIVY_CONFIG_FILE: trivy-config.yaml
-  SHORT_SHA: ${{ github.sha }}
 
-
-# ===============================
-# Job 1: Source → Test → Sonar
-# ===============================
 jobs:
   test-and-sonar:
     name: Test & SonarCloud Scan
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -31,18 +25,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      # cache: npm          # 👈 optional but recommended
-      # cache-dependency-path: backend/package-lock.json  # if using cache
 
       - name: Install dependencies
-        run: npm ci              # 👈 prefer 'ci' over 'install' in CI
+        run: npm ci
         working-directory: ./backend
-      # Enable later if tests exist
-      # - name: Run tests
-      #   run: npm test
 
-      - name: Create Sonar reports directory
-        run: mkdir -p ${{ env.REPORTS_DIR }}/sonar
+      # Optional: Uncomment if you have tests + coverage
+      # - name: Run tests with coverage
+      #   run: npm run test:coverage  # must generate lcov.info in backend/coverage/
+      #   working-directory: ./backend
+
+      - name: Create reports directories
+        run: |
+          mkdir -p ${{ env.REPORTS_DIR }}/sonar
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarqube-scan-action@master
@@ -53,28 +48,28 @@ jobs:
             -Dsonar.organization=ksami13200
             -Dsonar.projectKey=ksami13200_openshift-bookstore
             -Dsonar.sources=./backend
-            -Dsonar.javascript.lcov.reportPaths=scans-reports/sonar
-# -Dsonar.qualitygate.wait=true
-      
+            # Only include coverage if you actually generate it!
+            # -Dsonar.javascript.lcov.reportPaths=backend/coverage/lcov.info
+
       - name: Fetch Sonar Metrics
         run: |
-          mkdir -p scans-reports/sonar
           curl -s -u ${{ secrets.SONAR_TOKEN }}: \
-          "https://sonarcloud.io/api/measures/component?component=Abdelrazek97_cap-stone-project&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
-          -o scans-reports/sonar/metrics.json
-      - name: Generate Sonar Report
+            "https://sonarcloud.io/api/measures/component?component=ksami13200_openshift-bookstore&metricKeys=bugs,vulnerabilities,code_smells,security_hotspots" \
+            -o ${{ env.REPORTS_DIR }}/sonar/metrics.json
+
+      - name: Generate Sonar Markdown Report
         run: |
-          echo "# Sonar Metrics" > scans-reports/sonar/report.md
-          echo "| Metric | Value |" >> scans-reports/sonar/report.md
-          echo "|------|-------|" >> scans-reports/sonar/report.md
-          jq -r '.component.measures[] | "| \(.metric) | \(.value) |"' scans-reports/sonar/metrics.json >> scans-reports/sonar/report.md
-      - uses: actions/upload-artifact@v4
+          echo "# SonarCloud Security Metrics" > ${{ env.REPORTS_DIR }}/sonar/report.md
+          echo "| Metric | Value |" >> ${{ env.REPORTS_DIR }}/sonar/report.md
+          echo "|--------|-------|" >> ${{ env.REPORTS_DIR }}/sonar/report.md
+          jq -r '.component.measures[] | "| \(.metric) | \(.value // "N/A") |"' ${{ env.REPORTS_DIR }}/sonar/metrics.json >> ${{ env.REPORTS_DIR }}/sonar/report.md
+
+      - name: Upload Sonar Reports
+        uses: actions/upload-artifact@v4
         with:
-          name: sonar-report
-          path: scans-reports/sonar/report.md
-# ===============================
-# Job 2: Build → Trivy → SBOM → Sign → Push
-# ===============================
+          name: sonar-reports
+          path: ${{ env.REPORTS_DIR }}/sonar/
+
   build-scan-sign-push:
     name: Build, Scan, Sign & Push Image
     runs-on: ubuntu-latest
@@ -86,8 +81,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-
-      
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -102,15 +95,26 @@ jobs:
       - name: Build Docker image
         run: docker build -t $IMAGE ./backend
 
-# ✅ NOW scan the locally built image
-      - name: Trivy Image Scan
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          image-ref: ${{ env.IMAGE }}
-          trivy-config: ${{ env.TRIVY_CONFIG_FILE }}
-          exit-code: 1
-          format: table
-          output: ${{ env.REPORTS_DIR }}/trivy/trivy-report.txt
+      - name: Create Trivy reports directory
+        run: mkdir -p ${{ env.REPORTS_DIR }}/trivy
+
+      # Use Trivy CLI directly for full output control
+      - name: Install Trivy
+        run: |
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.53.0/trivy_0.53.0_Linux-64bit.tar.gz
+          tar zxvf trivy_0.53.0_Linux-64bit.tar.gz trivy
+          sudo mv trivy /usr/local/bin/
+
+      - name: Trivy Image Vulnerability Scan
+        run: |
+          trivy image \
+            --config ${{ env.TRIVY_CONFIG_FILE }} \
+            --exit-code 1 \
+            --severity HIGH,CRITICAL \
+            --format table \
+            --output ${{ env.REPORTS_DIR }}/trivy/trivy-report.txt \
+            $IMAGE
+
       - name: Generate Trivy SBOM (CycloneDX)
         run: |
           trivy image \
@@ -130,27 +134,20 @@ jobs:
           echo "${{ secrets.COSIGN_KEY }}" | base64 -d > cosign.key
           cosign sign --key cosign.key $IMAGE
 
-      - name: Upload security reports
+      - name: Upload Trivy Reports
         uses: actions/upload-artifact@v4
         with:
-          name: security-reports
-          path: |
-            ${{ env.REPORTS_DIR }}/trivy
+          name: trivy-reports
+          path: ${{ env.REPORTS_DIR }}/trivy/
 
-# ===============================
-# Job 3: Update Kubernetes Manifests
-# ===============================
   deploy:
     name: Update Kubernetes Manifests
     runs-on: ubuntu-latest
     needs: build-scan-sign-push
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Update image in Kubernetes manifests
         run: |
-          sed -i "s|image:.*|image: $IMAGE|" k8s/backend/deployment.yaml
-
-   
+          sed -i "s|image:.*|image: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|" k8s/backend/deployment.yaml
