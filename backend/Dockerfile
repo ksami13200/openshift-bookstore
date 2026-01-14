@@ -3,39 +3,39 @@
 # =========================
 FROM node:18-bookworm-slim AS builder
 
+# Create custom user 'Khaled'
+RUN groupadd -g 10001 Khaled && \
+    useradd -u 10001 -g Khaled -m Khaled
+
 WORKDIR /app
 
-# Copy dependency manifests
 COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
-# Install production deps only
-RUN npm ci --omit=dev --ignore-scripts && \
-    npm cache clean --force
-
-# Copy app code
 COPY server.js ./
-
-# Set ownership for distroless (UID 65532 = non-root)
-RUN chown -R 65532:65532 /app
-
 
 # =========================
 # 2️⃣ Runtime stage (Distroless)
 # =========================
-FROM gcr.io/distroless/nodejs18-debian12@sha256:<digest>
-
+# Using a specific versioned tag instead of 'latest'
+FROM gcr.io/distroless/nodejs18-debian12:v20250101
 
 WORKDIR /app
 
-# Copy built app
-COPY --from=builder /app /app
+# Copy user identity from builder
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
 
-# Environment
+# Copy app and set ownership to Khaled
+COPY --from=builder --chown=Khaled:Khaled /app /app
+
+# Switch to the custom user
+USER Khaled
+
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Expose port (for documentation only)
 EXPOSE 3000
 
-# Run app with Node.js
-CMD ["node", "server.js"]
+# Execute the app
+CMD ["server.js"]
