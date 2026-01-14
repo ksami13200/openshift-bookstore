@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: quota
+  namespace: data-ns
+spec:
+  hard:
+    pods: "5"
+    persistentvolumeclaims: "5"

@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: bookstore-db
+  namespace: data-ns
 spec:
   serviceName: bookstore-db-svc
   replicas: 1
@@ -29,16 +30,27 @@ spec:
             configMapKeyRef:
               name: bookstore-db-config
               key: MYSQL_USER
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: bookstore-db-secret
-              key: MYSQL_ROOT_PASSWORD
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
               name: bookstore-db-secret
               key: MYSQL_PASSWORD
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bookstore-db-secret
+              key: MYSQL_ROOT_PASSWORD
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        readinessProbe:
+          exec:
+            command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
+          initialDelaySeconds: 15
         volumeMounts:
         - name: db-data
           mountPath: /var/lib/mysql
@@ -46,7 +58,7 @@ spec:
   - metadata:
       name: db-data
     spec:
-      accessModes: ["ReadWriteOnce"]
+      accessModes: [ReadWriteOnce]
       storageClassName: bookstore-sc
       resources:
         requests:

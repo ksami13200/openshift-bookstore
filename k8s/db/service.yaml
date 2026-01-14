@@ -2,9 +2,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: bookstore-db-svc
+  namespace: data-ns
 spec:
   selector:
     app: bookstore-db
   ports:
-    - port: 3306
-      targetPort: 3306
+  - port: 3306
+    targetPort: 3306

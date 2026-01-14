@@ -2,16 +2,18 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-be-to-db
+  namespace: data-ns
 spec:
   podSelector:
     matchLabels:
-      app: database
+      app: bookstore-db
   ingress:
   - from:
-    - podSelector:
+    - namespaceSelector:
+        matchLabels:
+          name: backend-ns
+      podSelector:
         matchLabels:
           app: bookstore-be
     ports:
-    - protocol: TCP
-      port: 5432   # change if MySQL → 3306
-  
+    - port: 3306
