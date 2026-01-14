@@ -103,7 +103,7 @@ jobs:
       - name: Trivy Scan (Image)
         uses: aquasecurity/trivy-action@0.33.1
         with:
-            image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+            image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
             format: table
             output: trivy-${{ env.IMAGE_NAME }}.txt
             scan-type: image
