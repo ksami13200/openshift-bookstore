@@ -5,20 +5,20 @@ metadata:
   namespace: argocd
 spec:
   generators:
-  - list:
-      elements:
-      - name: backend
-        path: k8s/backend
-        namespace: backend-ns
-      - name: frontend
-        path: k8s/frontend
-        namespace: frontend-ns
-      - name: db
-        path: k8s/db
-        namespace: data-ns
-      - name: redis
-        path: k8s/redis
-        namespace: data-ns
+    - list:
+        elements:
+          - name: backend
+            path: k8s/backend
+            namespace: backend-ns
+          - name: frontend
+            path: k8s/frontend
+            namespace: frontend-ns
+          - name: db
+            path: k8s/db
+            namespace: data-ns
+          - name: redis
+            path: k8s/redis
+            namespace: data-ns
 
   template:
     metadata:
