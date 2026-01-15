@@ -48,6 +48,7 @@ jobs:
             -Dsonar.projectKey=ksami13200_openshift-bookstore
             -Dsonar.sources=.
             -Dsonar.qualitygate.wait=true
+            -Dsonar.coverage.exclusions=**/*.html,**/*.css
 
 # ======================================================
 # 2️⃣ BUILD + SCAN + SIGN + PUSH
