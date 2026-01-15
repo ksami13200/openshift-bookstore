@@ -49,11 +49,13 @@ jobs:
           -Dsonar.qualitygate.wait=true
           -Dsonar.coverage.exclusions=**/*.html,**/*.css
     
-    - name: Fetch Sonar Metrics
+    - name: Fetch SonarCloud metrics
       run: |
-          curl -s -u ${{ secrets.SONAR_TOKEN }}: \
-            "https://sonarcloud.io/api/measures/component?component=ksami13200_openshift-bookstore&metricKeys=bugs,vulnerabilities,code_smells,security_hotspots" \
-            -o ${{ env.REPORTS_DIR }}/sonar/metrics.json
+          mkdir -p scans-reports/sonar
+          curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+          "https://sonarcloud.io/api/measures/component?component=ksami13200_openshift-bookstore&metricKeys=bugs,vulnerabilities,code_smells,security_hotspots" \
+          -o scans-reports/sonar/metrics.json
+
 
     - name: Generate Sonar Markdown Report
       run: |
