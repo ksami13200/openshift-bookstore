@@ -48,7 +48,25 @@ jobs:
           -Dsonar.sources=.
           -Dsonar.qualitygate.wait=true
           -Dsonar.coverage.exclusions=**/*.html,**/*.css
+    
+    - name: Fetch Sonar Metrics
+      run: |
+          curl -s -u ${{ secrets.SONAR_TOKEN }}: \
+            "https://sonarcloud.io/api/measures/component?component=ksami13200_openshift-bookstore&metricKeys=bugs,vulnerabilities,code_smells,security_hotspots" \
+            -o ${{ env.REPORTS_DIR }}/sonar/metrics.json
 
+    - name: Generate Sonar Markdown Report
+      run: |
+          echo "# SonarCloud Security Metrics" > ${{ env.REPORTS_DIR }}/sonar/report.md
+          echo "| Metric | Value |" >> ${{ env.REPORTS_DIR }}/sonar/report.md
+          echo "|--------|-------|" >> ${{ env.REPORTS_DIR }}/sonar/report.md
+          jq -r '.component.measures[] | "| \(.metric) | \(.value // "N/A") |"' ${{ env.REPORTS_DIR }}/sonar/metrics.json >> ${{ env.REPORTS_DIR }}/sonar/report.md
+
+    - name: Upload Sonar Reports
+      uses: actions/upload-artifact@v4
+      with:
+          name: sonar-reports
+          path: ${{ env.REPORTS_DIR }}/sonar/
 
 # ======================================================
 # 2️⃣ BUILD + SCAN + SIGN + PUSH
