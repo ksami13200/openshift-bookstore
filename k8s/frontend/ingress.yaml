@@ -4,22 +4,20 @@ metadata:
   name: bookstore-ingress
   namespace: frontend-ns
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    # Optional: Add these for better security
-    nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256"
-    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
-    nginx.ingress.kubernetes.io/hsts: "true"
-    nginx.ingress.kubernetes.io/hsts-max-age: "31536000"
-    # If using cert-manager, add:
-    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # Add HSTS for better security
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains" always;
+    # Add debug logging
+    nginx.ingress.kubernetes.io/server-snippet: |
+      ssl_verify_client off;
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
     - bookstore.local
-    secretName: bookstore-tls  # This secret must exist in frontend-ns
+    secretName: bookstore-tls
   rules:
   - host: bookstore.local
     http:
