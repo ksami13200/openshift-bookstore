@@ -9,3 +9,7 @@ spec:
   ports:
   - port: 3000
     targetPort: 3000
+
+  env:
+  - name: DB_HOST
+    value: mysql.data.svc.cluster.local
