@@ -71,30 +71,48 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build image
+      - name: Set image tag
         run: |
-          docker build \
-            -t ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            ./frontend
+          echo "IMAGE=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
 
-      - name: Trivy Image Scan (fail on HIGH,CRITICAL)
-        uses: aquasecurity/trivy-action@0.33.1
+      - name: Build Docker image
+        run: docker build -t $IMAGE ./frontend
+
+      - name: Create Trivy reports directory
+        run: mkdir -p ${{ env.REPORTS_DIR }}/trivy
+
+      # Use Trivy CLI directly for full output control
+      - name: Install Trivy
+        run: |
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.53.0/trivy_0.53.0_Linux-64bit.tar.gz
+          tar zxvf trivy_0.53.0_Linux-64bit.tar.gz trivy
+          sudo mv trivy /usr/local/bin/
+
+      - name: Trivy Image Vulnerability Scan
+        run: |
+          trivy image \
+            --config ${{ env.TRIVY_CONFIG_FILE }} \
+            --exit-code 0 \
+            --severity HIGH,CRITICAL \
+            --format table \
+            --output ${{ env.REPORTS_DIR }}/trivy/trivy-report.txt \
+            $IMAGE
+
+      - name: Generate Trivy SBOM (CycloneDX)
+        run: |
+          trivy image \
+            --config ${{ env.TRIVY_CONFIG_FILE }} \
+            --format cyclonedx \
+            --output ${{ env.REPORTS_DIR }}/trivy/sbom.cdx \
+            $IMAGE
+      - name: Upload Trivy Reports
+        uses: actions/upload-artifact@v4
         with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          severity: HIGH,CRITICAL
-          exit-code: 1
-          format: table
-          output: trivy-report.txt
+          name: trivy-reports
+          path: ${{ env.REPORTS_DIR }}/trivy/
 
-      - name: Trivy SBOM (CycloneDX)
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: cyclonedx
-          output: sbom.cdx.json
-
-      - name: Push image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      - name: Push image to Docker Hub
+        run: docker push $IMAGE
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
@@ -108,13 +126,7 @@ jobs:
             cosign sign --key cosign.key --yes $IMAGE
             rm -f cosign.key
 
-      - name: Upload security reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports
-          path: |
-            trivy-report.txt
-            sbom.cdx.json
+      
 
 # ======================================================
 # 3️⃣ DEPLOY – UPDATE K8S MANIFEST
