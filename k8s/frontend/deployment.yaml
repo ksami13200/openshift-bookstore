@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: bookstore-fe
-        image: bookstore/frontend:latest
+        image: khaledsami/bookstore-fe:270c69f7a2922e0a5cee77fa13c132cbafe94e27
         ports:
         - containerPort: 8080
         resources:
