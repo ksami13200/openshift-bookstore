@@ -10,6 +10,4 @@ spec:
   - port: 3000
     targetPort: 3000
 
-  env:
-  - name: DB_HOST
-    value: bookstore-db.data-ns.svc.cluster.local
+    
