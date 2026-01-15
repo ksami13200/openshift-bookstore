@@ -22,33 +22,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-     
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
 
-      # Optional tests
-      # - name: Run tests
-      #   working-directory: frontend
-      #   run: npm test -- --coverage
+    - name: Install frontend dependencies
+      working-directory: frontend
+      run: npm ci
 
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          projectBaseDir: frontend
-          args: >
-            -Dsonar.organization=ksami13200
-            -Dsonar.projectKey=ksami13200_openshift-bookstore
-            -Dsonar.sources=.
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.coverage.exclusions=**/*.html,**/*.css
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@v2
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        projectBaseDir: frontend
+        args: >
+          -Dsonar.organization=ksami13200
+          -Dsonar.projectKey=ksami13200_openshift-bookstore
+          -Dsonar.sources=.
+          -Dsonar.qualitygate.wait=true
+          -Dsonar.coverage.exclusions=**/*.html,**/*.css
+
 
 # ======================================================
 # 2️⃣ BUILD + SCAN + SIGN + PUSH
