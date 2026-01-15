@@ -15,38 +15,37 @@ spec:
     spec:
       containers:
       - name: bookstore-be
-        image: khaledsami/bookstore-be:c0cd1b172793fbeafaa3f031e791e51cd0185949
+        image: moelhamzawy1/backend:v2
         ports:
         - containerPort: 3000
-        env:
-        - name: DB_HOST
-          value: bookstore-db-svc.data-ns.svc.cluster.local
-        - name: DB_PORT
-          value: "3306"
-        - name: DB_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: bookstore-db-config
-              key: MYSQL_DATABASE
-        - name: DB_USER
-          valueFrom:
-            configMapKeyRef:
-              name: bookstore-db-config
-              key: MYSQL_USER
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: bookstore-db-secret
-              key: MYSQL_PASSWORD
-        - name: REDIS_HOST
-          value: redis-svc.data-ns.svc.cluster.local
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: bookstore-db-secret
-              key: REDIS_PASSWORD
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
         readinessProbe:
           httpGet:
             path: /ready
             port: 3000
-          initialDelaySeconds: 10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
