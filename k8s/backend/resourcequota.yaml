@@ -7,4 +7,4 @@ spec:
   hard:
     pods: "10"
     requests.cpu: "2"
-    requests.memory: 2Gi
+    requests.memory: 1Gi
