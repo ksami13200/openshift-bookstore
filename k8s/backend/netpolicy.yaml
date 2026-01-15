@@ -9,17 +9,25 @@ spec:
       app: bookstore-be
   policyTypes:
   - Ingress
+  - Egress
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: frontend-ns
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: argocd
       podSelector:
         matchLabels:
           app: bookstore-fe
     ports:
     - protocol: TCP
       port: 3000
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: data-ns
+    ports:
+    - protocol: TCP
+      port: 3306
+    - protocol: TCP
+      port: 6379
