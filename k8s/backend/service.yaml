@@ -12,4 +12,4 @@ spec:
 
   env:
   - name: DB_HOST
-    value: mysql.data.svc.cluster.local
+    value: bookstore-db.data-ns.svc.cluster.local
