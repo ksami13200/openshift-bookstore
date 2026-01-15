@@ -17,7 +17,7 @@ spec:
       containers:
       - name: redis
         image: redis:7.0
-        args: ["--requirepass", "$(REDIS_PASSWORD)"]
+        args: ["--requirepass","$(REDIS_PASSWORD)"]
         env:
         - name: REDIS_PASSWORD
           valueFrom:
@@ -26,15 +26,3 @@ spec:
               key: REDIS_PASSWORD
         ports:
         - containerPort: 6379
-        volumeMounts:
-        - name: redis-data
-          mountPath: /data
-  volumeClaimTemplates:
-  - metadata:
-      name: redis-data
-    spec:
-      accessModes: [ReadWriteOnce]
-      storageClassName: bookstore-sc
-      resources:
-        requests:
-          storage: 5Gi

@@ -5,33 +5,29 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - list:
-        elements:
-          - name: backend
-            path: k8s/backend
-            namespace: backend-ns
-          - name: frontend
-            path: k8s/frontend
-            namespace: frontend-ns
-          - name: db
-            path: k8s/db
-            namespace: data-ns
-          - name: redis
-            path: k8s/redis
-            namespace: data-ns
-
+  - list:
+      elements:
+      - name: frontend
+        path: k8s/frontend
+        namespace: frontend-ns
+      - name: backend
+        path: k8s/backend
+        namespace: backend-ns
+      - name: db
+        path: k8s/db
+        namespace: data-ns
   template:
     metadata:
-      name: '{{name}}'
+      name: "{{name}}"
     spec:
       project: default
       source:
         repoURL: https://github.com/ksami13200/openshift-bookstore
         targetRevision: master
-        path: '{{path}}'
+        path: "{{path}}"
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{namespace}}'
+        namespace: "{{namespace}}"
       syncPolicy:
         automated:
           prune: true

@@ -1,33 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-fe-to-be
+  name: allow-be-egress
   namespace: backend-ns
 spec:
   podSelector:
     matchLabels:
       app: bookstore-be
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: frontend-ns
-      podSelector:
-        matchLabels:
-          app: bookstore-fe
-    ports:
-    - protocol: TCP
-      port: 3000
+  policyTypes: [Egress]
   egress:
   - to:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: data-ns
     ports:
-    - protocol: TCP
-      port: 3306
-    - protocol: TCP
-      port: 6379
+    - port: 3306
+    - port: 6379
