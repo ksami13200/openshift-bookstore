@@ -1,44 +1,25 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: docker.io/mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: bookstore
-    volumes:
-      - mysql_data:/var/lib/mysql
-    restart: unless-stopped
-
-  redis:
-    image: docker.io/library/redis:7-alpine
-    restart: unless-stopped
-
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
+    image: moelhamzawy1/backend:v2
+    container_name: backend
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DATABASE_HOST=mysql
-      - REDIS_HOST=redis
-    depends_on:
-      - mysql
-      - redis
-    restart: unless-stopped
+    networks:
+      - app-network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: moelhamzawy1/frontend:v2
+    container_name: frontend
     ports:
       - "8080:8080"
     depends_on:
       - backend
-    restart: unless-stopped
+    networks:
+      - app-network
 
-volumes:
-  mysql_data:
+networks:
+  app-network:
+    driver: bridge
