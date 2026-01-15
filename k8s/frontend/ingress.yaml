@@ -4,14 +4,9 @@ metadata:
   name: bookstore-ingress
   namespace: frontend-ns
   annotations:
+    # Keep only these basic ones
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      # Add HSTS for better security
-      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains" always;
-    # Add debug logging
-    nginx.ingress.kubernetes.io/server-snippet: |
-      ssl_verify_client off;
 spec:
   ingressClassName: nginx
   tls:
