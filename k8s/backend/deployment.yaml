@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: bookstore-be
-        image: moelhamzawy1/backend:v2
+        image: khaledsami/bookstore-be:c0cd1b172793fbeafaa3f031e791e51cd0185949
         ports:
         - containerPort: 3000
         env:
