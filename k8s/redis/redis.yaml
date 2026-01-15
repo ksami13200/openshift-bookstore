@@ -26,3 +26,15 @@ spec:
               key: REDIS_PASSWORD
         ports:
         - containerPort: 6379
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ReadWriteOnce]
+      storageClassName: bookstore-sc
+      resources:
+        requests:
+          storage: 5Gi
